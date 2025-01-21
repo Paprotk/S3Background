@@ -1,5 +1,6 @@
 ﻿using System;
 using Sims3.Gameplay;
+using Sims3.Gameplay.Core;
 using Sims3.SimIFace;
 using Sims3.UI;
 using Sims3.UI.GameEntry;
@@ -14,18 +15,13 @@ namespace S3MenuBackground
         private static bool kInstantiator;
 #pragma warning restore CS0169 // Field is never used
         public static string timeOfDay;
-        
         public static char randomLetter;
         
         static Main()
         {
             World.sOnStartupAppEventHandler += OnStartupApp;
             World.sOnEnterNotInWorldEventHandler += OnEnterNotInWorldEventHandler;
-        }
-
-        private static void OnEnterNotInWorldEventHandler(object sender, EventArgs e)
-        {
-            Simulator.AddObject(new OneShotFunctionTask(Main.Run, StopWatch.TickStyles.Milliseconds, 1f));
+            World.sOnWorldQuitEventHandler += OnWorldQuit;
         }
 
         private static void OnStartupApp(object sender, EventArgs e)
@@ -33,6 +29,28 @@ namespace S3MenuBackground
             DateTime currentTime = DateTime.Now;
             timeOfDay = GetDayOrNight(currentTime);
             Randomize();
+            Commands.sGameCommands.Register("cb", "Change Background.", Commands.CommandType.General, (Main.Cheat));
+        }
+        private static void OnEnterNotInWorldEventHandler(object sender, EventArgs e)
+        {
+            Simulator.AddObject(new OneShotFunctionTask(Main.Run, StopWatch.TickStyles.Milliseconds, 1f));
+        }
+        private static void OnWorldQuit(object sender, EventArgs e)
+        {
+            if (!GameStates.IsTravelling) // if not traveling clear 
+            {
+                DateTime currentTime = DateTime.Now;
+                timeOfDay = GetDayOrNight(currentTime);
+                Randomize();
+                Run();
+            }
+        }
+        
+        public static int Cheat(object[] parameters)
+        {
+            Randomize();
+            Run();
+            return 1;
         }
         static string GetDayOrNight(DateTime time)
         {
@@ -80,7 +98,7 @@ namespace S3MenuBackground
         public static void Randomize()
         {
             Random random = new Random();
-            int randomIndex = random.Next(0, 26);
+            int randomIndex = random.Next(0, 3);
             randomLetter = (char)('a' + randomIndex);
         }
     }
