@@ -25,6 +25,8 @@ namespace S3MenuBackground
         [Tunable]
         // ReSharper disable once UnassignedField.Global
         public static bool bShowMods;
+
+        public static bool bShouldRemoveEffect;
         static Main()
         {
             World.sOnStartupAppEventHandler += OnStartupApp;
@@ -34,6 +36,7 @@ namespace S3MenuBackground
 
         private static void OnStartupApp(object sender, EventArgs e)
         {
+            //Only in debug
             Commands.sGameCommands.Register("cb", "Change Background.", Commands.CommandType.General, (Main.Cheat));
         }
 
@@ -52,17 +55,15 @@ namespace S3MenuBackground
         }
         private static void OnEnterNotInWorldEventHandler(object sender, EventArgs e)
         {
+            bShouldRemoveEffect = true;
             GetRandom();
             Simulator.AddObject(new OneShotFunctionTask(Main.Run, StopWatch.TickStyles.Seconds, 0.1f));
         }
         private static void OnLeaveNotInWorld(object sender, EventArgs e)
         {
-            Simulator.AddObject(new OneShotFunctionTask(() =>
-            {
-                GetRandom();
-                Run();
-                
-            }, StopWatch.TickStyles.Seconds, 0.1f));
+            bShouldRemoveEffect = true;
+            GetRandom();
+            Simulator.AddObject(new OneShotFunctionTask(Main.Run, StopWatch.TickStyles.Seconds, 0.1f));
         }
         
         public static int Cheat(object[] parameters)
@@ -107,10 +108,16 @@ namespace S3MenuBackground
                 
                 Block_9:;
                 ImageDrawable background = mainMenu.Drawable as ImageDrawable;
-                string imagename;
-                imagename = randomLetter + timeOfDay;
+                string imagename = randomLetter + timeOfDay;
                 background.Image = UIManager.LoadUIImage(ResourceKey.CreatePNGKey(imagename, 0U));
-                
+                if (bShouldRemoveEffect)
+                {
+                    Window effect1 = mainMenu.GetChildByIndex(4) as Window;
+                    Window effect2 = mainMenu.GetChildByIndex(2) as Window;
+                    mainMenu.DestroyChild(effect1);
+                    mainMenu.DestroyChild(effect2);
+                }
+                bShouldRemoveEffect = false;
                 mainMenu.Invalidate();
                 if (!bShownDialog && bShowMods)
                 {
@@ -124,10 +131,9 @@ namespace S3MenuBackground
         {
             Random random = new Random();
             char newLetter;
-
             do
             {
-                int randomIndex = random.Next(0, 3);
+                int randomIndex = random.Next(0, 14);
                 newLetter = (char)('a' + randomIndex);
             } while (newLetter == previousLetter);
 
