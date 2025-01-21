@@ -1,0 +1,17 @@
+C:\Users\Arek\Documents\SharpDevelop Projects\S3MenuBackground\S3MenuBackground\bin\Debug\S3MenuBackground.dll
+C:\Users\Arek\Documents\SharpDevelop Projects\S3MenuBackground\S3MenuBackground\bin\Debug\S3MenuBackground.pdb
+C:\Users\Arek\Documents\SharpDevelop Projects\S3MenuBackground\S3MenuBackground\bin\Debug\ScriptCore.dll
+C:\Users\Arek\Documents\SharpDevelop Projects\S3MenuBackground\S3MenuBackground\bin\Debug\SimIFace.dll
+C:\Users\Arek\Documents\SharpDevelop Projects\S3MenuBackground\S3MenuBackground\bin\Debug\Sims3GameplayObjects.dll
+C:\Users\Arek\Documents\SharpDevelop Projects\S3MenuBackground\S3MenuBackground\bin\Debug\Sims3GameplaySystems.dll
+C:\Users\Arek\Documents\SharpDevelop Projects\S3MenuBackground\S3MenuBackground\bin\Debug\Sims3MetaData.dll
+C:\Users\Arek\Documents\SharpDevelop Projects\S3MenuBackground\S3MenuBackground\bin\Debug\Sims3StoreObjects.dll
+C:\Users\Arek\Documents\SharpDevelop Projects\S3MenuBackground\S3MenuBackground\bin\Debug\UI.dll
+C:\Users\Arek\Documents\SharpDevelop Projects\S3MenuBackground\S3MenuBackground\obj\Debug\S3MenuBackground.dll
+C:\Users\Arek\Documents\SharpDevelop Projects\S3MenuBackground\S3MenuBackground\obj\Debug\S3MenuBackground.pdb
+C:\Users\Arek\Documents\SharpDevelop Projects\S3MenuBackground\S3MenuBackground\bin\Debug\mscorlib.dll
+C:\Users\Arek\Documents\SharpDevelop Projects\S3MenuBackground\S3MenuBackground\bin\Debug\System.dll
+C:\Users\Arek\Documents\SharpDevelop Projects\S3MenuBackground\S3MenuBackground\bin\Debug\System.Xml.dll
+C:\Users\Arek\Documents\SharpDevelop Projects\S3MenuBackground\S3MenuBackground\obj\Debug\S3MenuBackground.csproj.AssemblyReference.cache
+C:\Users\Arek\Documents\SharpDevelop Projects\S3MenuBackground\S3MenuBackground\obj\Debug\S3MenuBackground.csproj.CoreCompileInputs.cache
+C:\Users\Arek\Documents\SharpDevelop Projects\S3MenuBackground\S3MenuBackground\obj\Debug\S3MenuBa.37499B02.Up2Date
