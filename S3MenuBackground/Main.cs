@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Sims3.Gameplay;
 using Sims3.Gameplay.Core;
+using Sims3.Gameplay.Utilities;
 using Sims3.SimIFace;
 using Sims3.UI;
 using Sims3.UI.GameEntry;
@@ -15,20 +16,19 @@ namespace S3MenuBackground
 #pragma warning disable CS0169 // Field is never used
         private static bool kInstantiator;
 #pragma warning restore CS0169 // Field is never used
-        public static string timeOfDay;
         [Tunable] public static bool bRespectTimeOfDay;
         public static bool bShownDialog;
         [Tunable] public static bool bShowMods;
         public static bool bShouldRemoveEffect;
-        private static Random random = new Random();
-        private static char previousLetter;
-        private static char randomLetter;
+        private static readonly Random random = new Random();
         [Tunable] public static int dayHour;
         [Tunable] public static int nightHour;
-        [Tunable] public static string startLetter;
-        [Tunable] public static string endLetter;
         [Tunable] public static bool bDebugging;
-        
+        [Tunable] public static bool bShowInvalidDialog;
+        public static readonly List<string> dayFileList = new List<string>();
+        public static readonly List<string> nightFileList = new List<string>();
+        public static readonly List<string> removedDay = new List<string>();
+        public static readonly List<string> removedNight = new List<string>();
 
     static Main()
         {
@@ -36,89 +36,150 @@ namespace S3MenuBackground
             World.sOnEnterNotInWorldEventHandler += HandleNotInWorldEvent;
             World.sOnLeaveNotInWorldEventHandler += HandleNotInWorldEvent;
         }
+    
+        internal static void ParseCustomMainMenuImageData()
+        {
+            XmlDbData xmlDbData = XmlDbData.ReadData("CustomMainMenuImages");
+            if (xmlDbData == null)
+            {
+                return;
+            }
 
+            xmlDbData.Tables.TryGetValue("CustomImage", out var xmlDbTable);
+            if (xmlDbTable != null)
+            {
+                foreach (XmlDbRow xmlDbRow in xmlDbTable.Rows)
+                {
+                    string dayImagName = xmlDbRow.GetString("dayImagName");
+                    string nightImagName = xmlDbRow.GetString("nightImagName");
+                    dayFileList.Add(dayImagName);
+                    nightFileList.Add(nightImagName);
+                }
+            }
+            ValidateImages();
+        }
+        public static void ValidateImages()
+        {
+            // Validate day images
+            for (int i = dayFileList.Count - 1; i >= 0; i--)
+            {
+                string imageName = dayFileList[i];
+                if (!IsValidImage(imageName))
+                {
+                    removedDay.Add(imageName); // Add to removed list
+                    dayFileList.RemoveAt(i);
+                }
+            }
+
+            // Validate night images
+            for (int i = nightFileList.Count - 1; i >= 0; i--)
+            {
+                string imageName = nightFileList[i];
+                if (!IsValidImage(imageName))
+                {
+                    removedNight.Add(imageName); // Add to removed list
+                    nightFileList.RemoveAt(i);
+                }
+            }
+        }
+
+        private static bool IsValidImage(string imageName)
+        {
+            try
+            {
+                var image = UIManager.LoadUIImage(ResourceKey.CreatePNGKey(imageName, 0U));
+                return image != null;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        
         private static void OnStartupApp(object sender, EventArgs e)
         {
-            //In testing only
+            ParseCustomMainMenuImageData();
             if (bDebugging)
             {
-                Commands.sGameCommands.Register("cb", "Change Background.", Commands.CommandType.General, (Main.ChangeBackgroundCheat));
-                Commands.sGameCommands.Register("fb", "Force change background to image.", Commands.CommandType.General, (Main.ForceBackgroundCheat));
+                Commands.sGameCommands.Register("cb", "Change background image to random.", Commands.CommandType.General, (Cheats.ChangeBackground));
+                Commands.sGameCommands.Register("pl", "Print all loaded images.", Commands.CommandType.General, (Cheats.PrintList));
+                Commands.sGameCommands.Register("fb", "Force background to specified one.", Commands.CommandType.General, (Cheats.ForceBackgroundHandler));
             }
-            Commands.sGameCommands.Register("mods", "Shows the mods list.", Commands.CommandType.General, (Main.ModCheckHandler));
-        }
-
-        private static int ForceBackgroundCheat(object[] parameters)
-        {
-            Simulator.AddObject(new OneShotFunctionTask(() =>
-            {
-                    FBHandler();
-            }, StopWatch.TickStyles.Seconds, 0.1f));
-            return 1;
-        }
-
-        public static void FBHandler()
-        {
-            string result = StringInputDialog.Show("Force Background", "Enter background image name:", "", false);
-
-            // Ensure the input is exactly 2 characters long
-            if (result.Length != 2)
-            {
-                SimpleMessageDialog.Show("Invalid Input", "Input must be exactly 2 characters long.");
-                return;
-            }
-
-            char firstChar = result[0];
-            char secondChar = result[1];
-
-            // Check if the first character is a letter and not higher than endLetter
-            if (!Char.IsLetter(firstChar) || firstChar > endLetter[0])
-            {
-                SimpleMessageDialog.Show("Invalid Input", $"The first character must be a letter not higher than {endLetter[0]}.");
-                return;
-            }
-
-            // Check if the second character is a digit and not higher than 1
-            if (!Char.IsDigit(secondChar) || secondChar > '1')
-            {
-                SimpleMessageDialog.Show("Invalid Input", "The second character must be a digit not higher than 1.");
-                return;
-            }
-            
-            randomLetter = firstChar; // Store the letter as string
-            timeOfDay = secondChar.ToString(); // Store the number as string
-
-            Run();
+            Commands.sGameCommands.Register("mods", "Shows the mods list.", Commands.CommandType.General, (Cheats.ModCheckHandler));
         }
 
         private static void HandleNotInWorldEvent(object sender, EventArgs e)
         {
             bShouldRemoveEffect = true;
-            GetRandom();
             Simulator.AddObject(new OneShotFunctionTask(Run, StopWatch.TickStyles.Seconds, 0.1f));
-        }
-        public static void GetRandom()
-        {
-            DateTime currentTime = DateTime.Now;
-            timeOfDay = bRespectTimeOfDay ? GetDayOrNight(currentTime) : GetZeroOrOne().ToString();
-            RandomizeLetter();
+            if (bShowInvalidDialog && (removedDay.Count > 0 || removedNight.Count > 0))
+            {
+                string content = "";
+
+                if (removedDay.Count > 0)
+                {
+                    content += "Removed Day images:\n" + string.Join(", ", removedDay.ToArray()) + "\n\n";
+                }
+
+                if (removedNight.Count > 0)
+                {
+                    content += "Removed Night images:\n" + string.Join(", ", removedNight.ToArray()) + "\n\n";
+                }
+
+                SimpleMessageDialog.Show("Removed Images", content);
+                removedDay.Clear();
+                removedNight.Clear();
+            }
         }
         
-        public static int ChangeBackgroundCheat(object[] parameters)
+        private static string lastSelection = string.Empty;
+        public static string GetRandom()
         {
-            if (GameStates.IsInMainMenuState)
+            DateTime currentTime = DateTime.Now;
+            var timeOfDay = (currentTime.Hour >= dayHour && currentTime.Hour < nightHour) ? "day" : "night";
+    
+            // Determine whether we should respect the time of day
+            if (bRespectTimeOfDay)
             {
-                GetRandom();
-                Run();
-                return 1;
+                // Randomize from the appropriate list based on time of day
+                if (timeOfDay == "day")
+                {
+                    // Pick a random image from the dayFileList
+                    string randomChoice;
+                    do
+                    {
+                        randomChoice = dayFileList[random.Next(dayFileList.Count)];
+                    } while (randomChoice == lastSelection); // Ensure it's not the same as the last one
+                    lastSelection = randomChoice; // Update the last selection
+                    return randomChoice;
+                }
+                else if (timeOfDay == "night")
+                {
+                    // Pick a random image from the nightFileList
+                    string randomChoice;
+                    do
+                    {
+                        randomChoice = nightFileList[random.Next(nightFileList.Count)];
+                    } while (randomChoice == lastSelection); // Ensure it's not the same as the last one
+                    lastSelection = randomChoice; // Update the last selection
+                    return randomChoice;
+                }
             }
-            return 1;
+            else
+            {
+                List<string> combinedList = new List<string>(dayFileList);
+                combinedList.AddRange(nightFileList);
+                string randomChoice;
+                do
+                {
+                    randomChoice = combinedList[random.Next(combinedList.Count)];
+                } while (randomChoice == lastSelection); // Ensure it's not the same as the last one
+                lastSelection = randomChoice; // Update the last selection
+                return randomChoice;
+            }
+            return string.Empty; // Return empty if something goes wrong
         }
-        static string GetDayOrNight(DateTime time)
-        {
-            return (time.Hour >= dayHour && time.Hour < nightHour) ? "1" : "0";
-        }
-        private static void Run()
+        public static void Run()
         {
             if (GameStates.IsInMainMenuState)
             {
@@ -139,10 +200,11 @@ namespace S3MenuBackground
                 if (mainMenu != null)
                 {
                     ImageDrawable background = mainMenu.Drawable as ImageDrawable;
-                    string imageName = randomLetter + timeOfDay;
+                    string imageName = GetRandom();
                     background.Image = UIManager.LoadUIImage(ResourceKey.CreatePNGKey(imageName, 0U));
                     
-                    if (bShouldRemoveEffect)
+                    
+                    if (bShouldRemoveEffect) //<3 u Eca
                     {
                         Window effect1 = mainMenu.GetChildByIndex(4) as Window;
                         Window effect2 = mainMenu.GetChildByIndex(2) as Window;
@@ -159,30 +221,6 @@ namespace S3MenuBackground
                 }
             }
         }
-
-        public static void RandomizeLetter()
-        {
-            // Convert startLetter and endLetter to their integer (Unicode) values
-            int start = startLetter[0];
-            int end = endLetter[0];
-
-            // Generate a random number between the Unicode values of startLetter and endLetter
-            char newLetter;
-            do
-            {
-                newLetter = (char)random.Next(start, end + 1);  // Include the end letter
-            } while (newLetter == previousLetter);  // Ensure it's different from the previous letter
-
-            randomLetter = newLetter;
-            previousLetter = randomLetter;  // Update the previous letter for the next iteration
-        }
-
-
-        public static int GetZeroOrOne()
-        {
-            return random.Next(0, 2); // Return either 0 or 1
-        }
-
         public static void ModCheck()
         {
             bShownDialog = true;
@@ -200,11 +238,6 @@ namespace S3MenuBackground
             {
                 ModInfoDialogCustom.Show(list.ToArray());
             }
-        }
-        private static int ModCheckHandler(object[] parameters)
-        {
-            Simulator.AddObject(new OneShotFunctionTask(ModCheck, StopWatch.TickStyles.Seconds, 0.1f));
-            return 1;
         }
     }
 }
