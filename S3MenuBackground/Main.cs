@@ -70,45 +70,21 @@ namespace S3MenuBackground
         }
         public static void ValidateImages()
         {
-            // Validate sunrise images
-            for (int i = sunriseFileList.Count - 1; i >= 0; i--)
-            {
-                string imageName = sunriseFileList[i];
-                if (!IsValidImage(imageName))
-                {
-                    removedSunrise.Add(imageName); // Add to removed list
-                    sunriseFileList.RemoveAt(i);
-                }
-            }
+            ValidateImageList(sunriseFileList, removedSunrise);
+            ValidateImageList(dayFileList, removedDay);
+            ValidateImageList(sunsetFileList, removedSunset);
+            ValidateImageList(nightFileList, removedNight);
+        }
 
-            // Validate day images
-            for (int i = dayFileList.Count - 1; i >= 0; i--)
+        private static void ValidateImageList(List<string> fileList, List<string> removedList)
+        {
+            for (int i = fileList.Count - 1; i >= 0; i--)
             {
-                string imageName = dayFileList[i];
+                string imageName = fileList[i];
                 if (!IsValidImage(imageName))
                 {
-                    removedDay.Add(imageName); // Add to removed list
-                    dayFileList.RemoveAt(i);
-                }
-            }
-            for (int i = sunsetFileList.Count - 1; i >= 0; i--)
-            {
-                string imageName = sunsetFileList[i];
-                if (!IsValidImage(imageName))
-                {
-                    removedSunset.Add(imageName); // Add to removed list
-                    sunsetFileList.RemoveAt(i);
-                }
-            }
-
-            // Validate night images
-            for (int i = nightFileList.Count - 1; i >= 0; i--)
-            {
-                string imageName = nightFileList[i];
-                if (!IsValidImage(imageName))
-                {
-                    removedNight.Add(imageName); // Add to removed list
-                    nightFileList.RemoveAt(i);
+                    removedList.Add(imageName); // Add to removed list
+                    fileList.RemoveAt(i);
                 }
             }
         }
