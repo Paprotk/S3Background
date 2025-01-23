@@ -28,7 +28,11 @@ namespace S3MenuBackground
             }
 
             // Join both lists into a single string
-            string content = "Day images:\n" + string.Join(", ", Main.dayFileList.ToArray()) + "\n\nNight images:\n" + string.Join(", ", Main.nightFileList.ToArray());
+            string content = "Day images:\n" + string.Join(", ", Main.dayFileList.ToArray()) + "\n\n" +
+                             "Night images:\n" + string.Join(", ", Main.nightFileList.ToArray()) + "\n\n" +
+                             "Sunrise images:\n" + string.Join(", ", Main.sunriseFileList.ToArray()) + "\n\n" +
+                             "Sunset images:\n" + string.Join(", ", Main.sunsetFileList.ToArray());
+
 
             // Show the content in the SimpleMessageDialog
             Simulator.AddObject(new OneShotFunctionTask(() =>
@@ -51,23 +55,12 @@ namespace S3MenuBackground
         {
             List<string> combinedList = new List<string>(Main.dayFileList);
             combinedList.AddRange(Main.nightFileList);
+            combinedList.AddRange(Main.sunsetFileList);
+            combinedList.AddRange(Main.sunriseFileList);
             string result = StringInputDialog.Show("Force Background", "Enter background image name:", "", false);
 
-            // Ensure the input is exactly 2 characters long
-            if (result.Length != 2)
-            {
-                SimpleMessageDialog.Show("Invalid Input", "Input must be exactly 2 characters long.");
-                return;
-            }
-
-            char firstChar = result[0];
-            char secondChar = result[1];
-
-            // Combine the two characters into a string
-            string combinedInput = firstChar.ToString() + secondChar.ToString();
-
             // Check if the combined string exists in the combinedList
-            if (!combinedList.Contains(combinedInput))
+            if (!combinedList.Contains(result))
             {
                 SimpleMessageDialog.Show("Invalid Input", "Image does not exist in the combined list.");
                 return;
@@ -95,7 +88,7 @@ namespace S3MenuBackground
                     ImageDrawable background = mainMenu.Drawable as ImageDrawable;
 
                     // Assign the combined string as the image name
-                    string imageName = combinedInput;
+                    string imageName = result;
                     background.Image = UIManager.LoadUIImage(ResourceKey.CreatePNGKey(imageName, 0U));
                     mainMenu.Invalidate();
                 }

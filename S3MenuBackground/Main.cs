@@ -21,14 +21,20 @@ namespace S3MenuBackground
         [Tunable] public static bool bShowMods;
         public static bool bShouldRemoveEffect;
         private static readonly Random random = new Random();
+        [Tunable] public static int sunriseHour;
         [Tunable] public static int dayHour;
+        [Tunable] public static int sunsetHour;
         [Tunable] public static int nightHour;
         [Tunable] public static bool bDebugging;
         [Tunable] public static bool bShowInvalidDialog;
         public static readonly List<string> dayFileList = new List<string>();
         public static readonly List<string> nightFileList = new List<string>();
+        public static readonly List<string> sunriseFileList = new List<string>();
+        public static readonly List<string> sunsetFileList = new List<string>();
         public static readonly List<string> removedDay = new List<string>();
         public static readonly List<string> removedNight = new List<string>();
+        public static readonly List<string> removedSunrise = new List<string>();
+        public static readonly List<string> removedSunset = new List<string>();
 
     static Main()
         {
@@ -50,9 +56,13 @@ namespace S3MenuBackground
             {
                 foreach (XmlDbRow xmlDbRow in xmlDbTable.Rows)
                 {
+                    string sunriseImagName = xmlDbRow.GetString("sunriseImagName");
                     string dayImagName = xmlDbRow.GetString("dayImagName");
+                    string sunsetImagName = xmlDbRow.GetString("sunsetImagName");
                     string nightImagName = xmlDbRow.GetString("nightImagName");
+                    sunriseFileList.Add(sunriseImagName);
                     dayFileList.Add(dayImagName);
+                    sunsetFileList.Add(sunsetImagName);
                     nightFileList.Add(nightImagName);
                 }
             }
@@ -60,6 +70,17 @@ namespace S3MenuBackground
         }
         public static void ValidateImages()
         {
+            // Validate sunrise images
+            for (int i = sunriseFileList.Count - 1; i >= 0; i--)
+            {
+                string imageName = sunriseFileList[i];
+                if (!IsValidImage(imageName))
+                {
+                    removedSunrise.Add(imageName); // Add to removed list
+                    sunriseFileList.RemoveAt(i);
+                }
+            }
+
             // Validate day images
             for (int i = dayFileList.Count - 1; i >= 0; i--)
             {
@@ -68,6 +89,15 @@ namespace S3MenuBackground
                 {
                     removedDay.Add(imageName); // Add to removed list
                     dayFileList.RemoveAt(i);
+                }
+            }
+            for (int i = sunsetFileList.Count - 1; i >= 0; i--)
+            {
+                string imageName = sunsetFileList[i];
+                if (!IsValidImage(imageName))
+                {
+                    removedSunset.Add(imageName); // Add to removed list
+                    sunsetFileList.RemoveAt(i);
                 }
             }
 
@@ -112,18 +142,28 @@ namespace S3MenuBackground
         {
             bShouldRemoveEffect = true;
             Simulator.AddObject(new OneShotFunctionTask(Run, StopWatch.TickStyles.Seconds, 0.1f));
-            if (bShowInvalidDialog && (removedDay.Count > 0 || removedNight.Count > 0))
+            if (bShowInvalidDialog && (removedSunrise.Count > 0 || removedDay.Count > 0 || removedSunset.Count > 0 || removedNight.Count > 0))
             {
                 string content = "";
 
+                if (removedSunrise.Count > 0)
+                {
+                    content += "Removed sunrise images:\n" + string.Join(", ", removedDay.ToArray()) + "\n\n";
+                }
+
                 if (removedDay.Count > 0)
                 {
-                    content += "Removed Day images:\n" + string.Join(", ", removedDay.ToArray()) + "\n\n";
+                    content += "Removed day images:\n" + string.Join(", ", removedNight.ToArray()) + "\n\n";
+                }
+                
+                if (removedSunset.Count > 0)
+                {
+                    content += "Removed sunset images:\n" + string.Join(", ", removedDay.ToArray()) + "\n\n";
                 }
 
                 if (removedNight.Count > 0)
                 {
-                    content += "Removed Night images:\n" + string.Join(", ", removedNight.ToArray()) + "\n\n";
+                    content += "Removed night images:\n" + string.Join(", ", removedNight.ToArray()) + "\n\n";
                 }
 
                 SimpleMessageDialog.Show("Removed Images", content);
@@ -136,15 +176,17 @@ namespace S3MenuBackground
         public static string GetRandom()
         {
             DateTime currentTime = DateTime.Now;
-            var timeOfDay = (currentTime.Hour >= dayHour && currentTime.Hour < nightHour) ? "day" : "night";
-    
+            var timeOfDay = GetCurrentTimeOfDay(currentTime.Hour);
+
             // Determine whether we should respect the time of day
             if (bRespectTimeOfDay)
             {
                 // Randomize from the appropriate list based on time of day
                 if (timeOfDay == "day")
                 {
-                    // Pick a random image from the dayFileList
+                    if (dayFileList.Count == 1)
+                        return dayFileList[0]; // Directly return if there's only one item
+
                     string randomChoice;
                     do
                     {
@@ -155,11 +197,39 @@ namespace S3MenuBackground
                 }
                 else if (timeOfDay == "night")
                 {
-                    // Pick a random image from the nightFileList
+                    if (nightFileList.Count == 1)
+                        return nightFileList[0]; // Directly return if there's only one item
+
                     string randomChoice;
                     do
                     {
                         randomChoice = nightFileList[random.Next(nightFileList.Count)];
+                    } while (randomChoice == lastSelection); // Ensure it's not the same as the last one
+                    lastSelection = randomChoice; // Update the last selection
+                    return randomChoice;
+                }
+                else if (timeOfDay == "sunrise")
+                {
+                    if (sunriseFileList.Count == 1)
+                        return sunriseFileList[0]; // Directly return if there's only one item
+
+                    string randomChoice;
+                    do
+                    {
+                        randomChoice = sunriseFileList[random.Next(sunriseFileList.Count)];
+                    } while (randomChoice == lastSelection); // Ensure it's not the same as the last one
+                    lastSelection = randomChoice; // Update the last selection
+                    return randomChoice;
+                }
+                else if (timeOfDay == "sunset")
+                {
+                    if (sunsetFileList.Count == 1)
+                        return sunsetFileList[0]; // Directly return if there's only one item
+
+                    string randomChoice;
+                    do
+                    {
+                        randomChoice = sunsetFileList[random.Next(sunsetFileList.Count)];
                     } while (randomChoice == lastSelection); // Ensure it's not the same as the last one
                     lastSelection = randomChoice; // Update the last selection
                     return randomChoice;
@@ -169,6 +239,12 @@ namespace S3MenuBackground
             {
                 List<string> combinedList = new List<string>(dayFileList);
                 combinedList.AddRange(nightFileList);
+                combinedList.AddRange(sunriseFileList);
+                combinedList.AddRange(sunsetFileList);
+
+                if (combinedList.Count == 1)
+                    return combinedList[0]; // Directly return if there's only one item
+
                 string randomChoice;
                 do
                 {
@@ -179,6 +255,28 @@ namespace S3MenuBackground
             }
             return string.Empty; // Return empty if something goes wrong
         }
+
+
+        private static string GetCurrentTimeOfDay(int currentTimeHour)
+        {
+            if (currentTimeHour >= sunriseHour && currentTimeHour < dayHour)
+            {
+                return "sunrise";
+            }
+            else if (currentTimeHour >= dayHour && currentTimeHour < sunsetHour)
+            {
+                return "day";
+            }
+            else if (currentTimeHour >= sunsetHour && currentTimeHour < nightHour)
+            {
+                return "sunset";
+            }
+            else
+            {
+                return "night";
+            }
+        }
+
         public static void Run()
         {
             if (GameStates.IsInMainMenuState)
