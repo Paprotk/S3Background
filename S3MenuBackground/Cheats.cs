@@ -11,11 +11,8 @@ namespace S3MenuBackground
     {
         public static int ChangeBackground(object[] parameters)
         {
-            if (GameStates.IsInMainMenuState)
-            {
-                Main.Run();
-                return 1;
-            }
+            if (!GameStates.IsInMainMenuState) return 1;
+            Main.Run();
             return 1;
         }
         public static int PrintList(object[] parameters)
@@ -62,6 +59,7 @@ namespace S3MenuBackground
 
         public static void ForceBackground()
         {
+            if (!GameStates.IsInMainMenuState) return;
             List<string> combinedList = new List<string>(Main.dayFileList);
             combinedList.AddRange(Main.nightFileList);
             combinedList.AddRange(Main.sunsetFileList);

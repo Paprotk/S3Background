@@ -277,7 +277,6 @@ namespace S3MenuBackground
                     string imageName = GetRandom();
                     background.Image = UIManager.LoadUIImage(ResourceKey.CreatePNGKey(imageName, 0U));
                     
-                    
                     if (bShouldRemoveEffect) //<3 u Eca
                     {
                         Window effect1 = mainMenu.GetChildByIndex(4) as Window;
