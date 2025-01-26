@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Sims3.Gameplay;
 using Sims3.SimIFace;
 using Sims3.UI;
@@ -12,7 +13,7 @@ namespace S3MenuBackground
         public static int ChangeBackground(object[] parameters)
         {
             if (!GameStates.IsInMainMenuState) return 1;
-            Main.Run();
+            Main.Run(); 
             return 1;
         }
         public static int PrintList(object[] parameters)

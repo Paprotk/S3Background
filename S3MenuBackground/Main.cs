@@ -1,19 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using Sims3.Gameplay;
 using Sims3.Gameplay.Core;
 using Sims3.Gameplay.Utilities;
 using Sims3.SimIFace;
 using Sims3.UI;
 using Sims3.UI.GameEntry;
+using Environment = System.Environment;
 using OneShotFunctionTask = Sims3.Gameplay.OneShotFunctionTask;
 
 namespace S3MenuBackground
 {
     public static class Main
     {
-        [Tunable]
 #pragma warning disable CS0169 // Field is never used
+        [Tunable]
         private static bool kInstantiator;
 #pragma warning restore CS0169 // Field is never used
         [Tunable] public static bool bRespectTimeOfDay;
@@ -268,15 +270,15 @@ namespace S3MenuBackground
                     {
                         break; // Exit loop if MainMenu is found
                     }
+
                     windowBase = UIManager.GetParentWindow(windowBase); // Move to the parent window
                 }
-                
+
                 if (mainMenu != null)
                 {
                     ImageDrawable background = mainMenu.Drawable as ImageDrawable;
                     string imageName = GetRandom();
                     background.Image = UIManager.LoadUIImage(ResourceKey.CreatePNGKey(imageName, 0U));
-                    
                     if (bShouldRemoveEffect) //<3 u Eca
                     {
                         Window effect1 = mainMenu.GetChildByIndex(4) as Window;
@@ -284,16 +286,19 @@ namespace S3MenuBackground
                         mainMenu.DestroyChild(effect1);
                         mainMenu.DestroyChild(effect2);
                     }
+
                     bShouldRemoveEffect = false;
                     mainMenu.Invalidate();
-                    
+
                     if (!bShownDialog && bShowMods)
                     {
-                        Simulator.AddObject(new OneShotFunctionTask(Main.ModCheck, StopWatch.TickStyles.Seconds, 0.1f));
+                        Simulator.AddObject(new OneShotFunctionTask(Main.ModCheck, StopWatch.TickStyles.Seconds,
+                            0.1f));
                     }
                 }
             }
         }
+
         public static void ModCheck()
         {
             bShownDialog = true;
